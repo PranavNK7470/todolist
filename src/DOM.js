@@ -1,4 +1,6 @@
 import new_todo from "./assets/new_todo.svg";
+import remove_todo from "./assets/remove_todo.svg";
+import description from "./assets/description.svg";
 import { compareAsc, format } from "date-fns";
 
 export function createNewDom() {
@@ -76,25 +78,25 @@ export function createNewDom() {
 
         const todo = document.createElement("div");
         todo.setAttribute("class",'todo');
-        todo.setAttribute("style",'max-width: 100%; height: 50px; display: flex; gap: 10px; align-items: center; border: 1px solid black; border-radius: 5px;');
+        todo.setAttribute("style",'max-width: 100%; height: 50px; display: grid; grid-template-columns: repeat(20,1fr); grid-template-rows: 100fr; align-items: center; border: 1px solid black; border-radius: 5px;');
         
         const checkbox = document.createElement("input");
         checkbox.setAttribute("class","checkbox");
         checkbox.setAttribute("type","checkbox");
-        checkbox.setAttribute("style","width: 20px; height: 20px;");
+        checkbox.setAttribute("style","width: 20px; height: 20px; grid-area: 1/2/1/4; display: flex; align-items: center;");
         todo.appendChild(checkbox); 
 
         const todoname = document.createElement("input");
         todoname.setAttribute('class','todoname');
         todoname.setAttribute('type','text');
         todoname.setAttribute('placeholder','Enter name here...');
-        todoname.setAttribute("style","font-family:'Average Sans', sans-serif; font-size: 1.2rem; display: flex; align-items: center; height: 80%; width: 70%; border: none;")
+        todoname.setAttribute("style","grid-area: 1/5/1/10; display: flex; align-items: center; font-family:'Average Sans', sans-serif; font-size: 1.2rem; display: flex; align-items: center; border: none;")
         todo.appendChild(todoname);
 
         const due_date = document.createElement('input');
         due_date.setAttribute("class","todo_due_date");
         due_date.setAttribute('type','date');
-        due_date.setAttribute("style","font-size: 1.2rem; height: 80%; display: flex; justify-content: right; border: none;");
+        due_date.setAttribute("style","grid-area: 1/14/1/20; display: flex; justify-content: right; align-items: center; font-size: 1.2rem; display: flex; justify-content: right; border: none;");
         todo.appendChild(due_date);
 
         todo.appendChild(checkbox);
@@ -118,6 +120,89 @@ export function createNewDom() {
         })
     }
 
+    function renderTodo(name, desc, due, done, pri) {
+        const todo_image = document.createElement("div");
+        todo_image.setAttribute("name", 'todo');
+        todo_image.setAttribute("id", todoCount);
+        todo_image.setAttribute('style', 'max-width: 100%; height: 50px; display: grid; grid-template-columns: repeat(20,1fr); grid-template-rows: 100fr; border: 1px solid black; border-radius: 5px; align-items: center;');
+
+        const checkbox = document.createElement("input");
+        checkbox.setAttribute("class", "checkbox");
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("style", "width: 20px; height: 20px; grid-area: 1/2/1/4; display: flex; align-items: center;");
+        if(done) checkbox.checked = true;
+        todo_image.appendChild(checkbox);
+
+        const todoname = document.createElement("div");
+        todoname.setAttribute("style", "grid-area: 1/4/1/10; display: flex; align-items: center;")
+        if(!done) {
+            todoname.innerHTML += "<h2>" + name + "</h2>";
+        } else {
+            todoname.innerHTML += "<h2>" + "<i>" + name + "</i>" + "</h2>";
+        }
+        todo_image.appendChild(todoname);
+
+        const todoOptions = document.createElement("div");
+        todoOptions.setAttribute("style",'grid-area: 1/10/1/14; display: flex; align-items: center; justify-content: center; gap: 10px;');
+        todo_image.appendChild(todoOptions);
+
+        const removeTodo = document.createElement("img");
+        removeTodo.setAttribute('class','remove-todo-button');
+        removeTodo.src = remove_todo;
+        removeTodo.setAttribute('style',"width: 20px; height: 20px; object-fit: contain;");
+        todoOptions.appendChild(removeTodo);
+
+        const todoDesc = document.createElement("img");
+        todoDesc.src = description;
+        todoDesc.setAttribute('style','width: 20px; height: 20px; object-fit: contain;');
+        todoOptions.appendChild(todoDesc);
+
+        const due_date = document.createElement("div");
+        due_date.setAttribute("class", "todo_due_date");
+        due_date.setAttribute("style", "grid-area: 1/14/1/20; display: flex; justify-content: right; align-items: center;");
+        due_date.innerHTML += "<h2>" + due + "</h2>";
+        todo_image.appendChild(due_date);
+        
+        todo_container.appendChild(todo_image);
+
+        checkbox.addEventListener("click", () => {
+            done = !done;
+            (done) ? todoname.innerHTML = "<h2>" + "<i>" + name + "</i>" + "</h2>" : todoname.innerHTML = "<h2>" + name + "</h2>";
+            localStorage.removeItem(`${pjt_name}-${name}`);
+            localStorage.setItem(`${pjt_name}-${name}`, JSON.stringify({name, desc, due, done, pri}));
+            renderTodos();
+        });
+        
+        removeTodo.addEventListener("mouseenter", () => {
+            removeTodo.style.cursor = "pointer";
+        });
+        removeTodo.addEventListener("mouseleave", () => {
+            removeTodo.style.cursor = "default";
+        });
+        removeTodo.addEventListener('click', () => {
+            localStorage.removeItem(`${pjt_name}-${name}`);
+            todo_container.replaceChildren();
+            renderTodos();
+        });
+
+        todoDesc.addEventListener("mouseenter", () => {
+            todoDesc.style.cursor = "pointer";
+        });
+        todoDesc.addEventListener("mouseleave", () => {
+            todoDesc.style.cursor = "default";
+        });
+        todoDesc.addEventListener('click', () => {
+            loadTodo(name, desc, due, done, pri);
+        });
+    }
+
+    function renderTodos() {
+        let todos = getTodos();
+        for(let todo of todos) {
+            renderTodo(todo.name, todo.desc, todo.due, todo.done, todo.pri);
+        }
+    }
+
     function getTodos() {
         let todos = [];
         for(let i = 0; i < localStorage.length; i++) {
@@ -130,55 +215,13 @@ export function createNewDom() {
         return todos;
     }
 
-    function renderTodo(name, desc, due, done, pri) {
-        const todo_image = document.createElement("div");
-        todo_image.setAttribute("name", 'todo');
-        todo_image.setAttribute("id", todoCount);
-        todo_image.setAttribute('style', 'max-width: 100%; height: 50px; display: flex; gap: 10px; align-items: center; border: 1px solid black; border-radius: 5px;');
+    function loadTodo(name, desc, due, done, pri) {
+        content.replaceChildren();
 
-        const checkbox = document.createElement("input");
-        checkbox.setAttribute("class", "checkbox");
-        checkbox.setAttribute("type", "checkbox");
-        checkbox.setAttribute("style", "width: 20px; height: 20px;");
-        if(done) checkbox.checked = true;
-        todo_image.appendChild(checkbox);
-
-        const todoname = document.createElement("div");
-        todoname.setAttribute("style", "width:70%; height: 80%; display: flex; align-items: center;")
-        if(!done) {
-            todoname.innerHTML += "<h2>" + name + "</h2>";
-        } else {
-            todoname.innerHTML += "<h2>" + "<i>" + name + "</i>" + "</h2>";
-        }
-        todo_image.appendChild(todoname);
-
-        const due_date = document.createElement("div");
-        due_date.setAttribute("class", "todo_due_date");
-        due_date.setAttribute("style", "height: 80%; display: flex; justify-content: right; align-items: center;");
-        due_date.innerHTML += "<h2>" + due + "</h2>";
-        todo_image.appendChild(due_date);
-
-        checkbox.addEventListener("click", () => {
-            done = !done;
-            (done) ? todoname.innerHTML = "<h2>" + "<i>" + name + "</i>" + "</h2>" : todoname.innerHTML = "<h2>" + name + "</h2>";
-            localStorage.removeItem(`${pjt_name}-${name}`);
-            localStorage.setItem(`${pjt_name}-${name}`,JSON.stringify({name, desc, due, done, pri}));
-        })
-
-        todo_container.appendChild(todo_image);
-    }
-
-    function renderTodos() {
-        let todos = getTodos();
-        console.log("todos:");
-        console.log(todos);
-        for(let todo of todos) {
-            renderTodo(todo.name, todo.desc, todo.due, todo.done, todo.pri);
-        }
-    }
-
-    function loadTodo() {
-
+        const todoDesc_container = document.createElement("div");
+        todoDesc_container.setAttribute('style','min-height: 50vh; width: 75%; background-color: white; border-radius: 15px; display: grid; grid-template: repeat(100,1fr) / repeat(100,1fr);')
+        container.appendChild(todoDesc_container);
+    
     }
 
     return { 
