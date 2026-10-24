@@ -32,6 +32,10 @@ em {
     font-weight: 1500;
 }
 
+i {
+    text-decoration-line: line-through;
+}
+
 *, *::before, *::after {
     box-sizing: border-box;
 }

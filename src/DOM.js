@@ -1,12 +1,11 @@
-import { set } from "lodash";
 import new_todo from "./assets/new_todo.svg";
+import { compareAsc, format } from "date-fns";
 
 export function createNewDom() {
     const content = document.querySelector(".main-content");
     let projectCount = 0;
     let todoCount = 0;
     let todo_container;
-    let todos=[];
     let pjt_name;
     let options;
 
@@ -42,7 +41,7 @@ export function createNewDom() {
         todolist.appendChild(pri)
 
         todo_container = document.createElement("div");
-        todo_container.setAttribute("class",'todos');
+        todo_container.setAttribute("class",'todo-container');
         todo_container.setAttribute('style','grid-area: 10/10/90/90; display: flex; flex-direction: column; gap: 10px; padding: 10px;');
         todolist.appendChild(todo_container);
 
@@ -67,12 +66,13 @@ export function createNewDom() {
         options.appendChild(newTodoButton);
 
         content.appendChild(todolist);
+
+        renderTodos();
     }   
 
     function addTodolist() {
         todoCount++;
         let name,desc='',due,done=false,pri=1;
-        todos.push({name,desc,due,done,pri,todoCount});
 
         const todo = document.createElement("div");
         todo.setAttribute("class",'todo');
@@ -86,14 +86,15 @@ export function createNewDom() {
 
         const todoname = document.createElement("input");
         todoname.setAttribute('class','todoname');
+        todoname.setAttribute('type','text');
         todoname.setAttribute('placeholder','Enter name here...');
-        todoname.setAttribute("style","display: flex; align-items: center; height: 80%; width: 70%; border: none;")
+        todoname.setAttribute("style","font-family:'Average Sans', sans-serif; font-size: 1.2rem; display: flex; align-items: center; height: 80%; width: 70%; border: none;")
         todo.appendChild(todoname);
 
         const due_date = document.createElement('input');
-        due_date.setAttribute('placeholder','dd/MM/yyyy');
         due_date.setAttribute("class","todo_due_date");
-        due_date.setAttribute("style","height: 80%; display: flex; justify-content: right; border: none;");
+        due_date.setAttribute('type','date');
+        due_date.setAttribute("style","font-size: 1.2rem; height: 80%; display: flex; justify-content: right; border: none;");
         todo.appendChild(due_date);
 
         todo.appendChild(checkbox);
@@ -102,10 +103,14 @@ export function createNewDom() {
 
         todo_container.appendChild(todo);
 
+        checkbox.addEventListener("click", () => {
+            done = true;
+        });
+
         todo.addEventListener("keydown", (e) => {
             if(e.key == 'Enter') {
                 name = todoname.value;
-                due = due_date.value;
+                due = format(due_date.value, "dd-MM-yyyy");
                 localStorage.setItem(`${pjt_name}-${name}`,JSON.stringify({name, desc, due, done, pri}));
                 todo_container.removeChild(todo);
                 renderTodo(name, desc, due, done, pri);
@@ -113,33 +118,63 @@ export function createNewDom() {
         })
     }
 
-    function renderTodo(name, desc, due, done, pri) {
+    function getTodos() {
+        let todos = [];
+        for(let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if(key.startsWith(`${pjt_name}`)) {
+                todos.push(JSON.parse(localStorage.getItem(key)));
+            }
+        }
 
-        //render after reading data.
-        const todo = document.createElement("div");
-        todo.setAttribute("name",'todo');
-        todo.setAttribute("id",todoCount);
-        todo.setAttribute('style','max-width: 100%; height: 50px; display: flex; gap: 10px; align-items: center; border: 1px solid black; border-radius: 5px;');
-        
+        return todos;
+    }
+
+    function renderTodo(name, desc, due, done, pri) {
+        const todo_image = document.createElement("div");
+        todo_image.setAttribute("name", 'todo');
+        todo_image.setAttribute("id", todoCount);
+        todo_image.setAttribute('style', 'max-width: 100%; height: 50px; display: flex; gap: 10px; align-items: center; border: 1px solid black; border-radius: 5px;');
+
         const checkbox = document.createElement("input");
-        checkbox.setAttribute("class","checkbox");
-        checkbox.setAttribute("type","checkbox");
-        checkbox.setAttribute("style","width: 20px; height: 20px;");
-        todo.appendChild(checkbox);
-        
+        checkbox.setAttribute("class", "checkbox");
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("style", "width: 20px; height: 20px;");
+        if(done) checkbox.checked = true;
+        todo_image.appendChild(checkbox);
+
         const todoname = document.createElement("div");
-        todoname.setAttribute("style","width:70%; height: 80%; display: flex; align-items: center;")
-        todoname.innerHTML += "<h2>" + name + "</h2>";
-        todo.appendChild(todoname);
+        todoname.setAttribute("style", "width:70%; height: 80%; display: flex; align-items: center;")
+        if(!done) {
+            todoname.innerHTML += "<h2>" + name + "</h2>";
+        } else {
+            todoname.innerHTML += "<h2>" + "<i>" + name + "</i>" + "</h2>";
+        }
+        todo_image.appendChild(todoname);
 
         const due_date = document.createElement("div");
-        due_date.setAttribute("class","todo_due_date");
-        due_date.setAttribute("style","height: 80%; display: flex; justify-content: right; align-items: center;");
+        due_date.setAttribute("class", "todo_due_date");
+        due_date.setAttribute("style", "height: 80%; display: flex; justify-content: right; align-items: center;");
         due_date.innerHTML += "<h2>" + due + "</h2>";
-        todo.appendChild(due_date);
-        
-        todo_container.appendChild(todo);
+        todo_image.appendChild(due_date);
 
+        checkbox.addEventListener("click", () => {
+            done = !done;
+            (done) ? todoname.innerHTML = "<h2>" + "<i>" + name + "</i>" + "</h2>" : todoname.innerHTML = "<h2>" + name + "</h2>";
+            localStorage.removeItem(`${pjt_name}-${name}`);
+            localStorage.setItem(`${pjt_name}-${name}`,JSON.stringify({name, desc, due, done, pri}));
+        })
+
+        todo_container.appendChild(todo_image);
+    }
+
+    function renderTodos() {
+        let todos = getTodos();
+        console.log("todos:");
+        console.log(todos);
+        for(let todo of todos) {
+            renderTodo(todo.name, todo.desc, todo.due, todo.done, todo.pri);
+        }
     }
 
     function loadTodo() {

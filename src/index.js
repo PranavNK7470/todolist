@@ -7,4 +7,4 @@ let default_project = createNewProject(format(Date.now(), "dd-MM-yyyy"),format(n
 console.log(default_project);
 
 // name, desc, due, done, pri
-default_project.addTodolist();
+//default_project.addTodolist();

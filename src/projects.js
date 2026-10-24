@@ -10,8 +10,6 @@ export function createNewProject(curr_date, due_date, project_name, description 
     function addTodolist() {
         const todo = createNewTodo();
         localStorage.setItem(`project-${project_name}`, JSON.stringify({curr_date, due_date, project_name, description, priority}));
-        console.log("localstorage:");
-        console.log(localStorage);
         return todo;
     }
 
