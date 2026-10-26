@@ -23,6 +23,7 @@
     "webpack-dev-server": "^6.0.0"
   },
   "dependencies": {
-    "date-fns": "^4.4.0"
+    "date-fns": "^4.4.0",
+    "quill": "^2.0.3"
   }
 }
