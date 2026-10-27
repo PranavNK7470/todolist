@@ -2,12 +2,19 @@ import new_todo from "./assets/new_todo.svg";
 import remove_todo from "./assets/remove_todo.svg";
 import description from "./assets/description.svg";
 import back_image from "./assets/back.svg";
+import view_project from "./assets/view-project.svg";
 import Quill from "quill";
 import "quill/dist/quill.core.css";
 import { compareAsc, format } from "date-fns";
 
 export function createNewDom() {
     const content = document.querySelector(".main-content");
+    const projects_button = document.querySelector(".nav-button#projects");
+    const projects_list = document.createElement("div");
+    projects_button.addEventListener("click", () => {
+        renderProjects();
+    });
+
     let projectCount = 0;
     let todoCount = 0;
     let todo_container;
@@ -100,8 +107,7 @@ export function createNewDom() {
         due_date.setAttribute("class","todo_due_date");
         due_date.setAttribute('type','date');
         due_date.setAttribute("style","grid-area: 1/14/1/20; display: flex; justify-content: right; align-items: center; font-size: 1.2rem; display: flex; justify-content: right; border: none;");
-        try{}
-        catch(e) {}
+
         todo.appendChild(due_date);
 
         todo.appendChild(checkbox);
@@ -171,8 +177,8 @@ export function createNewDom() {
         checkbox.addEventListener("click", () => {
             done = !done;
             (done) ? todoname.innerHTML = "<h2>" + "<i>" + name + "</i>" + "</h2>" : todoname.innerHTML = "<h2>" + name + "</h2>";
+            localStorage.removeItem(`${pjt_name}-${name}`);
             localStorage.setItem(`${pjt_name}-${name}`, JSON.stringify({name, desc, due, done, pri}));
-            renderTodos();
         });
         
         removeTodo.addEventListener("mouseenter", () => {
@@ -219,49 +225,50 @@ export function createNewDom() {
 
         return todos;
     }
-function loadTodo(name, desc, due, done, pri) {
+
+    function loadTodo(name, desc, due, done, pri) {
         content.replaceChildren();
 
         const todoDesc_container = document.createElement("div");
-        todoDesc_container.setAttribute("class","desc-container")
-        todoDesc_container.setAttribute('style','min-height: 50vh; width: 75%; background-color: white; border-radius: 15px; display: grid; grid-template: repeat(100,1fr) / repeat(100,1fr);')
+        todoDesc_container.setAttribute("class", "desc-container")
+        todoDesc_container.setAttribute('style', 'min-height: 50vh; width: 75%; background-color: white; border-radius: 15px; display: grid; grid-template: repeat(100,1fr) / repeat(100,1fr);')
         content.appendChild(todoDesc_container);
 
         const back = document.createElement("div");
-        back.setAttribute("class","back-button");
-        back.setAttribute("style","grid-area: 94/3/98/7; display: flex; gap: 5px;");
+        back.setAttribute("class", "back-button");
+        back.setAttribute("style", "grid-area: 94/3/98/7; display: flex; gap: 5px;");
         todoDesc_container.appendChild(back);
 
         const back_button = document.createElement("img");
-        back_button.setAttribute("class","back-button");
-        back_button.setAttribute("style","width: 70px; height: 20px; object-fit: cover;");
+        back_button.setAttribute("class", "back-button");
+        back_button.setAttribute("style", "width: 70px; height: 20px; object-fit: cover;");
         back_button.src = back_image;
         back.appendChild(back_button);
 
         const back_text = document.createElement("div");
-        back_text.setAttribute("class","back-text");
-        back_text.setAttribute("style","font-size: 1rem;");
+        back_text.setAttribute("class", "back-text");
+        back_text.setAttribute("style", "font-size: 1rem;");
         back_text.innerHTML = `<p>Back</p>`;
         back.appendChild(back_text);
-        
+
         const desc_namecard = document.createElement("div");
-        desc_namecard.setAttribute("class",'desc-namecard');
-        desc_namecard.setAttribute("style",'grid-area: 10/10/20/40;');
+        desc_namecard.setAttribute("class", 'desc-namecard');
+        desc_namecard.setAttribute("style", 'grid-area: 10/10/20/40;');
         desc_namecard.innerHTML += `<h1 style="font-size: 2rem;"> ${pjt_name} : ${name} </h1>`;
         todoDesc_container.appendChild(desc_namecard);
 
         const desc_due = document.createElement("div");
-        desc_due.setAttribute("class",'desc-due')
-        desc_due.setAttribute('style','grid-area: 12/75/16/100; display: flex; align-items: center; justify-content: center;');
+        desc_due.setAttribute("class", 'desc-due')
+        desc_due.setAttribute('style', 'grid-area: 12/75/16/100; display: flex; align-items: center; justify-content: center;');
         desc_due.innerHTML += `<h2> Due : ${due} </h2>`;
         todoDesc_container.appendChild(desc_due);
 
         const desc_content = document.createElement("div");
-        desc_content.setAttribute("class",'desc-content');
-        desc_content.setAttribute("style","grid-area: 20/10/90/95; border-radius: 10px; border: 1px solid black;");
+        desc_content.setAttribute("class", 'desc-content');
+        desc_content.setAttribute("style", "grid-area: 20/10/90/95; border-radius: 10px; border: 1px solid black;");
         desc_content.innerHTML = `<p> ${desc} </p>`;
         todoDesc_container.appendChild(desc_content);
-        
+
         const content_editor = new Quill(`.desc-content`);
         desc_content.style.fontFamily = `"Average Sans", sans serif`;
         desc_content.style.fontSize = "1.5rem";
@@ -284,10 +291,99 @@ function loadTodo(name, desc, due, done, pri) {
             const current_project = JSON.parse(localStorage.getItem(`project-${pjt_name}`));
             loadProject(current_project.curr_date, current_project.due_date, current_project.project_name, current_project.description, current_project.priority);
         });
+
+    }
+
+    function getProjects() {
+        let projects = [];
+        for(let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if(key.startsWith(`project`)) {
+                projects.push(JSON.parse(localStorage.getItem(key)));
+            }
+        }
+
+        return projects;
+    }
+
+    function renderProjects() {
+        content.replaceChildren();
+
+        const projects_container = document.createElement("div");
+        projects_container.setAttribute("class","projects-container");
+        projects_container.setAttribute('style','min-height: 50vh; width: 75%; background-color: white; border-radius: 10px; display: grid; grid-template: repeat(100,1fr) / repeat(100,1fr);');
+        content.appendChild(projects_container);
+
+        const heading = document.createElement('div');
+        heading.setAttribute("class",'projects-heading');
+        heading.setAttribute('style','grid-area: 4/5/8/25;');
+        heading.innerHTML += "<h1 style='font-size: 2rem;'>Your Projects</h1>";
+        projects_container.appendChild(heading);
+
+        projects_list.setAttribute("class",'projects-list');
+        projects_list.setAttribute("style",'grid-area: 10/5/95/100; display: flex; flex-direction: column; gap: 10px;');
+        projects_container.appendChild(projects_list);
+
+        console.log("projects:");
+        const projects = getProjects();
+        for(let project of projects) {
+            projects_list.replaceChildren();
+            console.log(project);
+            renderProject(project.curr_date, project.due_date, project.project_name, project.description);
+        }   
+    }
+
+    function renderProject(project_start_date, project_due_date, project_name, description, priority) {
+        const project = document.createElement("div");
+        project.setAttribute("class",`${project_name}`);
+        project.setAttribute("style",'min-height: 50px; width: 95%; border: 1px solid black; display: grid; grid-template: repeat(50,1fr) / repeat(100,1fr); border-radius: 10px;');
         
+        const sideaccent = document.createElement('div');
+        sideaccent.setAttribute("class","sideaccent");
+        sideaccent.setAttribute('style','grid-area: 1/1/51/2; border-top-left-radius: 10px; border-bottom-left-radius: 10px; background-color: skyblue;');
+        project.appendChild(sideaccent);
+        projects_list.appendChild(project);
+        
+        const project_namecard = document.createElement("div");
+        project_namecard.setAttribute("class","project_namecard");
+        project_namecard.setAttribute("style",'grid-area: 1/5/50/50; display: flex; justify-content: left; align-items: center;');
+        project_namecard.innerHTML += `<h2 style="font-size: 1.3rem;">${project_name}</h2>`;
+        project.appendChild(project_namecard);
+        
+        const pri = document.createElement("div");
+        pri.setAttribute("class",'priority');
+        if(priority === 1) {
+            pri.setAttribute("style","grid-area: 16/51/35/53; background-color: green; border-radius: 15px; border: 2px solid black;");
+        } else if(priority === 2) {
+            pri.setAttribute("style","grid-area: 16/51/35/53; background-color: yellow; border-radius: 15px; border: 2px solid black;");
+        } else {
+            pri.setAttribute("style","grid-area: 16/51/35/53; background-color: red; border-radius: 15px; border: 2px solid black;");
+        }
+        project.appendChild(pri);
+        
+        const open_project = document.createElement("img");
+        open_project.setAttribute("class",'open_project_button');
+        open_project.setAttribute("style","width: 20px; height: 20px; grid-area: 15/55/50/82; object-fit: contain;");
+        open_project.src = view_project;
+        project.appendChild(open_project);
+
+        const due = document.createElement("div");
+        due.setAttribute("class",'due-date');
+        due.setAttribute("style","grid-area: 1/82/50/95; display: flex; justify-content: right; align-items: center;");
+        due.innerHTML += `<p style="font-size: 1.2rem;">${project_due_date}</p>`;
+        project.appendChild(due);
+
+        open_project.addEventListener("mouseenter", () => {
+            open_project.style.cursor = "pointer";
+        });
+        open_project.addEventListener("mouseleave", () => {
+            open_project.style.cursor = "default";
+        });
+        open_project.addEventListener("click", () => {
+            loadProject(project_start_date, project_due_date, project_name, description, priority);
+        });
     }
     
-
     return { 
         loadProject,
         loadTodo,
