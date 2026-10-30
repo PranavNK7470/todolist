@@ -14,7 +14,6 @@ export function createNewProject(curr_date, due_date, project_name, description 
     }
 
     return {
-        todolist,
         curr_date,
         due_date,
         project_name,
